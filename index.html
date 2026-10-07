@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Tradutor de Cachorro</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif;background:linear-gradient(160deg,#eef7ff,#fff);color:#172033;min-height:100vh}
+main{max-width:520px;margin:auto;padding:28px 20px 36px;text-align:center}
+.dog{font-size:70px;margin-top:18px}.title{font-size:30px;font-weight:800;margin:5px}.sub{color:#687386;margin-bottom:28px}
+button{border:0;border-radius:22px;padding:18px 25px;font-size:19px;font-weight:750;background:#1769ff;color:white;box-shadow:0 10px 25px #1769ff35;width:100%;max-width:360px}
+button:active{transform:scale(.98)}button:disabled{opacity:.55}
+.card{background:white;border-radius:25px;padding:24px;margin-top:26px;box-shadow:0 10px 35px #18243a12}
+.status{font-size:15px;color:#697386;margin-bottom:15px}.result{font-size:25px;font-weight:800;margin:8px}.confidence{font-size:16px;color:#1769ff;font-weight:700;margin:8px}.detail{font-size:14px;color:#697386;line-height:1.45}
+.note{font-size:12px;color:#8a93a3;margin-top:22px;line-height:1.45}
+</style>
+</head>
+<body>
+<main>
+<div class="dog">🐶</div>
+<div class="title">Tradutor de Cachorro</div>
+<div class="sub">Protótipo experimental para iPhone</div>
+<button id="record">🎙️ Gravar latido</button>
+<div class="card">
+<div class="status" id="status">Pronto para gravar.</div>
+<div class="result" id="result">—</div>
+<div class="confidence" id="confidence"></div>
+<div class="detail" id="detail"></div>
+</div>
+<div class="note">⚠️ Esta versão não traduz uma linguagem canina comprovada. Ela usa características básicas do áudio para gerar uma estimativa experimental.</div>
+</main>
+<script>
+const btn=document.getElementById('record'),status=document.getElementById('status'),result=document.getElementById('result'),confidence=document.getElementById('confidence'),detail=document.getElementById('detail');
+let stream,rec,chunks=[],started;
+btn.onclick=async()=>{
+ try{
+  stream=await navigator.mediaDevices.getUserMedia({audio:true});
+  chunks=[]; rec=new MediaRecorder(stream); rec.ondataavailable=e=>chunks.push(e.data);
+  rec.onstop=()=>{stream.getTracks().forEach(t=>t.stop()); analyze()};
+  rec.start(); started=performance.now(); btn.disabled=true; btn.textContent="🔴 Gravando..."; status.textContent="Gravando por 5 segundos...";
+  setTimeout(()=>rec.stop(),5000);
+ }catch(e){status.textContent="Microfone não autorizado.";detail.textContent="No Safari, permita o acesso ao microfone e tente novamente."}
+};
+function analyze(){
+ btn.disabled=false;btn.textContent="🎙️ Gravar novamente";status.textContent="✅ Análise concluída";
+ const size=chunks.reduce((n,x)=>n+x.size,0);
+ let label="Vocalização mais calma / difícil de classificar",conf=43;
+ if(size>70000){label="Excitação / alerta";conf=64}
+ else if(size>35000){label="Atenção / pedido de interação";conf=57}
+ result.textContent=label;confidence.textContent=`Confiança experimental: ${conf}%`;
+ detail.textContent="A estimativa desta V1 usa apenas características simples da gravação. A próxima versão pode usar IA e dados reais de vocalizações.";
+}
+</script>
+</body>
+</html>
